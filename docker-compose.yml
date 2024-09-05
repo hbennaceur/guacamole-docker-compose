@@ -40,18 +40,17 @@ services:
     networks:
       - guacnetwork
     restart: always
-
-  # Apache2 as a reverse proxy for Guacamole
-  apache2:
-    image: httpd:2.4
+  # Nginx as reverse proxy for Guacamole
+  nginx:
+    image: nginx:latest
     depends_on:
       - guacamole
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      - ./apache2.conf:/usr/local/apache2/conf/httpd.conf
-      - ./ssl:/usr/local/apache2/conf/ssl  # For SSL certificates
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./ssl:/etc/nginx/ssl  # For SSL certificates
     networks:
       - guacnetwork
     restart: always
