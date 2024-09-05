@@ -1,0 +1,68 @@
+version: "3.8"
+
+services:
+
+  # Guacamole server
+  guacamole:
+    image: guacamole/guacamole:latest
+    depends_on:
+      - guacd
+      - postgres
+    environment:
+      GUACD_HOSTNAME: guacd
+      POSTGRES_HOSTNAME: postgres
+      POSTGRES_DATABASE: guacamole_db
+      POSTGRES_USER: guacamole_user
+      POSTGRES_PASSWORD: guac_password
+    ports:
+      - "8080:8080"
+    networks:
+      - guacnetwork
+    restart: always
+
+  # Guacamole proxy daemon
+  guacd:
+    image: guacamole/guacd:latest
+    networks:
+      - guacnetwork
+    restart: always
+
+  # PostgreSQL for Guacamole database
+  postgres:
+    image: postgres:alpine
+    environment:
+      POSTGRES_DB: guacamole_db
+      POSTGRES_USER: guacamole_user
+      POSTGRES_PASSWORD: guac_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init:/docker-entrypoint-initdb.d:z
+    networks:
+      - guacnetwork
+    restart: always
+
+  # Apache2 as a reverse proxy for Guacamole
+  apache2:
+    image: httpd:2.4
+    depends_on:
+      - guacamole
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./apache2.conf:/usr/local/apache2/conf/httpd.conf
+      - ./ssl:/usr/local/apache2/conf/ssl  # For SSL certificates
+    networks:
+      - guacnetwork
+    restart: always
+
+# Networks
+networks:
+  guacnetwork:
+    driver: bridge
+
+# Volumes
+volumes:
+  postgres_data:
+    driver: local
+
